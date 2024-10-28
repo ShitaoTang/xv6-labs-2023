@@ -131,7 +131,8 @@ runcmd(struct cmd *cmd)
   exit(0);
 }
 
-int getcmd(char *buf, int nbuf, int tty) {
+int getcmd(char *buf, int nbuf, int tty)
+{
     if (tty == 1)
         write(2, "$ ", 2);
     memset(buf, 0, nbuf);
@@ -141,32 +142,47 @@ int getcmd(char *buf, int nbuf, int tty) {
     return 0;
 }
 
-int main(void) {
+int getnstr(const char **s)
+{
+    int n = 0;
+    while(*(s[n++]) != 0)
+        ;
+    return n;
+}
+
+int main(void)
+{
     static char buf[100];
     int fd;
     int tty = 0;    // test if commands is from console
 
     fd = open("console", O_RDWR);
-    if (fd == 3) { // fd of file /console euqals 3
+    if (fd == 3) {  // fd of file /console euqals 3
         tty = 1;
     } else if (fd >= 0) {
         close(fd);
     }
 
-    // Read and run input commands.
     while (getcmd(buf, sizeof(buf), tty) >= 0) {
-        if (buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' ') {
-            // Chdir must be called by the parent, not the child.
-            buf[strlen(buf) - 1] = 0; // chop \n
-            if (chdir(buf + 3) < 0)
-                fprintf(2, "cannot cd %s\n", buf + 3);
-            continue;
+        int ncmd = 0;
+        char** cmds = strtok(buf, ';', &ncmd);
+
+        for (int i = 0; i < ncmd; ++i) {
+            if (cmds[i][0] == 'c' && cmds[i][1] == 'd' && cmds[i][2] == ' ') {
+                // Chdir must be called by the parent, not the child.
+                cmds[i][strlen(cmds[i]) - 1] = 0; // chop \n
+                if (chdir(cmds[i] + 3) < 0)
+                    fprintf(2, "cannot cd %s\n", cmds[i] + 3);
+                continue;
+            }
+            if (fork1() == 0) {
+                runcmd(parsecmd(cmds[i]));
+                exit(0);
+            }
+            wait(0);
         }
-        if (fork1() == 0) {
-            runcmd(parsecmd(buf));
-        }
-        wait(0);
     }
+
     exit(0);
 }
 

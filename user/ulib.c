@@ -63,6 +63,31 @@ strchr(const char *s, char c)
   return 0;
 }
 
+char** strtok(char* s, const char delim, int* ndem)
+{
+    static char str[10][100];
+    char buf[100];
+    int index = 0;
+    *ndem = 0;
+
+    for (int i = 0; i <= strlen(s) && *ndem < 10; ++i) {
+        if (s[i] == delim || s[i] == '\0') {
+            buf[index] = '\0';
+            strcpy(str[*ndem], buf);
+            (*ndem)++;
+            index = 0;
+        } else {
+            buf[index++] = s[i];
+        }
+    }
+
+    static char* strp[10];
+    for (int i = 0; i < *ndem; i++) {
+        strp[i] = str[i];
+    }
+    return strp;
+}
+
 char*
 gets(char *buf, int max)
 {
