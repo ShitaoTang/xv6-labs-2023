@@ -5,31 +5,31 @@
 
 void xargs(int argc, char* argv[])
 {
-    char buf[512], arg[512], ch;
-    int index = 0;
-    char *cmd = argv[0];
-    char** pure_argv = argv;
+    char arg[512];
+    int k = 0;
+    char ch;
+    char* cmd = argv[0];
+    char* pure_argv[20];
 
-    while (read(0, (char*)&ch, 1) > 0) {
-        buf[index++] = ch;
+    for (int i = 0; i < argc; i++) {
+        pure_argv[i] = argv[i];
     }
 
-    int k = 0;
-    for (int i = 0; i < index; ++i) {
-        if (buf[i] == '\n') {
+    while (read(0, &ch, 1) > 0) {
+        if (ch == '\n') {
             arg[k] = '\0';
-            k = 0;
             pure_argv[argc] = arg;
+            pure_argv[argc + 1] = 0;
 
             if (fork() == 0) {
                 exec(cmd, pure_argv);
-            }
-            else {
+            } else {
                 wait(0);
             }
-        }
-        else {
-            arg[k++] = buf[i];
+
+            k = 0;
+        } else {
+            arg[k++] = ch;
         }
     }
 }
